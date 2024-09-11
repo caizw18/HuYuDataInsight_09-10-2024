@@ -1,0 +1,47 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from arch import arch_model
+import yfinance as yf
+
+# Download Google (GOOGL) stock data from Yahoo Finance
+data = yf.download('GOOGL', start='2015-01-01', end='2024-01-01')
+
+# Calculate daily returns as percentage change
+data['Returns'] = 100 * data['Adj Close'].pct_change().dropna()
+
+# Plot the daily returns
+data['Returns'].plot(figsize=(10, 5))
+plt.title('Daily Returns of Google (GOOGL)')
+plt.show()
+
+# Drop NaN values from the Returns column
+returns = data['Returns'].dropna()
+
+# Specify the GARCH(2,1) model
+model = arch_model(returns, vol='Garch', p=2, q=1)
+
+# Fit the GARCH model
+garch_fit = model.fit()
+
+# Print the model summary
+print(garch_fit.summary())
+
+# Plot the fitted volatility from the GARCH model
+garch_fit.plot(annualize='D')
+plt.show()
+
+# Forecast volatility for the next 5 days
+forecast = garch_fit.forecast(horizon=5)
+
+# Extract the forecasted variance (volatility)
+print("Forecasted variance (volatility) for the next 5 days:")
+print(forecast.variance[-1:])
+
+# Plot forecasted volatility
+plt.figure(figsize=(10, 5))
+plt.plot(forecast.variance[-1:].T, marker='o')
+plt.title('Forecasted Volatility for the Next 5 Days (Google GOOGL)')
+plt.xlabel('Days Ahead')
+plt.ylabel('Forecasted Variance')
+plt.show()
